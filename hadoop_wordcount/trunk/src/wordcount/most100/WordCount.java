@@ -40,6 +40,7 @@ public class WordCount {
         }
     }
 
+    //commit test
     public static void main(String[] args) throws Exception {
         JobConf conf = new JobConf(WordCount.class);
         conf.setJobName("wordcount");
