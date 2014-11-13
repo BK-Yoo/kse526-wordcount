@@ -1,4 +1,4 @@
-package wordcount.most100;
+package wordcount.test;
 
 /**
  * Created by bk on 14. 11. 13.
@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.StringTokenizer;
 
-public class WordCount {
+public class WordCountTest {
 
     public static class Map extends MapReduceBase implements Mapper<LongWritable, Text, Text, IntWritable> {
         private final static IntWritable one = new IntWritable(1);
@@ -43,7 +43,7 @@ public class WordCount {
 
     //commit test
     public static void main(String[] args) throws Exception {
-        JobConf conf = new JobConf(WordCount.class);
+        JobConf conf = new JobConf(WordCountTest.class);
         conf.setJobName("wordcount");
 
         conf.setOutputKeyClass(Text.class);
