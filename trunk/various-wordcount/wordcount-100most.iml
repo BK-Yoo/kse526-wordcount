@@ -10,7 +10,7 @@
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../wordcount-100most/lib/hadoop-core-1.2.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/hadoop-core-1.2.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
