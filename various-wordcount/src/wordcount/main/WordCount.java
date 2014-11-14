@@ -97,10 +97,11 @@ public class WordCount {
 
         @Override
         public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException{
-            line = value.toString().trim();
-            result = line.split("\\s");
+            line = value.toString();
+            result = line.split(" ");
 
             for(String targetWord : result) {
+                targetWord = targetWord.trim();
                 if(targetWord.equals(""))
                     continue;
 
@@ -161,6 +162,9 @@ public class WordCount {
             sum = 0;
             for(IntWritable value : values)
                 sum += value.get();
+
+            if(key.toString().equals("arrive"))
+                System.out.println("arrive "+ sum);
 
             words.add(new Word(key.toString(), sum));
 
