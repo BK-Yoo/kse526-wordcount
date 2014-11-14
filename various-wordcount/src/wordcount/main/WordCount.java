@@ -41,6 +41,10 @@ public class WordCount {
             return this.text;
         }
 
+//        public void setFrequency(int frequency){ this.frequency = frequency; }
+//
+//        public void setText(String text){ this.text = text; }
+
         @Override
         public int hashCode() {
             return text.hashCode();
@@ -59,16 +63,22 @@ public class WordCount {
         @Override
         public int compareTo(Word o) {
             // if text of word is same, return 0(think they are same).
-            if(this.equals(o))
+            if(this.equals(o)) {
                 return 0;
 
-            int compareResult = Integer.compare(o.getFrequency(), this.getFrequency());
-
-            // only the frequency is same, then return 1 for allowing duplicate word.
-            if(compareResult == 0)
+            // texts of both words are different but the frequency is same, return 1 for allowing duplicate word.
+            } else if (compareFrequency(o, this) == 0){
                 return 1;
 
-            return compareResult;
+            } else {
+                // descending order
+                return compareFrequency(o, this);
+
+            }
+        }
+
+        private int compareFrequency(Word a, Word b){
+            return a.getFrequency() - b.getFrequency();
         }
     }
 
@@ -125,18 +135,26 @@ public class WordCount {
         @Override
         protected void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
             super.reduce(key, values, context);
-            // if the sum of key above the 100th frequency,
-            // then we write that key-value pair to reduce function.
-            if(sum >= words.last().getFrequency())
-                context.write(key, new IntWritable(sum));
+            // if the sum of key above the frequency of the 100th word,
+            // write that key-value pair to reduce function.
+            if (sum >= words.last().getFrequency()) {
+                tempValue.set(sum);
+                context.write(key, tempValue);
             }
-
+        }
     }
 
     public static class Reduce extends Reducer<Text, IntWritable, Text, IntWritable> {
-        private final int TOP_100 = 100;
-        SortedSet<Word> words = new TreeSet<Word>();
+        // Variables for reducing the cost of creating instance.
+        protected Text tempKey = new Text();
+        protected IntWritable tempValue = new IntWritable();
         protected int sum = 0;
+
+        // Container of word for 100 most frequent words.
+        protected SortedSet<Word> words = new TreeSet<Word>();
+
+        // Constant for checking the size of words.
+        private final int TOP_100 = 100;
 
         @Override
         protected void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
@@ -147,23 +165,25 @@ public class WordCount {
             words.add(new Word(key.toString(), sum));
 
             if(words.size() > TOP_100)
+                // last element ahs the smallest frequency.
                 words.remove(words.last());
         }
 
         @Override
-        public void cleanup(Reducer.Context context) throws IOException, InterruptedException {
+        public void cleanup(Context context) throws IOException, InterruptedException {
             emitWords(context);
         }
 
         protected void emitWords(Context context) throws IOException, InterruptedException {
-            for(Word word : words)
-                context.write(new Text(word.getText()), new IntWritable(word.getFrequency()));
+            for(Word word : words) {
+                tempKey.set(word.getText());
+                tempValue.set(word.getFrequency());
+                context.write(tempKey, tempValue);
+            }
         }
 
     }
 
-
-    //commit main
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration();
 
@@ -180,9 +200,9 @@ public class WordCount {
             if(args[index].equals("-output"))
                 outputPath = new Path(args[index + 1]);
 
-            //Check whether job uses combiner functions.
+            //Check whether job will use combiner functions or not.
             if(args[index].equals("-combiner"))
-                //if the "-combiner" option exists, set combiner class flag to true.
+                //if the "-combiner" option exists, set using combiner class flag to true.
                 useCombinerClass = true;
 
             //Extract the length of target words.
