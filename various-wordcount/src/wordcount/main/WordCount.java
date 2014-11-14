@@ -165,7 +165,7 @@ public class WordCount {
             words.add(new Word(key.toString(), sum));
 
             if(words.size() > TOP_100)
-                // last element ahs the smallest frequency.
+                // last element has the smallest frequency among the words.
                 words.remove(words.last());
         }
 
