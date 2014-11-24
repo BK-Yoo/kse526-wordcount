@@ -41,10 +41,6 @@ public class WordCount {
             return this.text;
         }
 
-//        public void setFrequency(int frequency){ this.frequency = frequency; }
-//
-//        public void setText(String text){ this.text = text; }
-
         @Override
         public int hashCode() {
             return text.hashCode();
@@ -89,18 +85,16 @@ public class WordCount {
         private final static IntWritable one = new IntWritable(1);
 
         private Text word = new Text();
-        private String[] result;
-        private String line;
 
         private int lengthOfWord = -1;
         private String prefixOfWord = "";
 
         @Override
         public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException{
-            line = value.toString();
-            result = line.split(" ");
 
-            for(String targetWord : result) {
+            // split the string line of input text.
+            // "\\s+" means remove all the white spaces between strings.
+            for(String targetWord : value.toString().split("\\s+")) {
                 targetWord = targetWord.trim();
                 if(targetWord.equals(""))
                     continue;
@@ -134,8 +128,8 @@ public class WordCount {
 
     public static class Combiner extends Reduce{
 
-        //There is some bugs, that combiner and reducer share the same words instance.
-        //So make words instance private for each worker.
+        //There is some bugs in hadoop, that combiner and reducer share the same words instance.
+        //So make 'words' instance private for each worker.
         private SortedSet<Word> words = new TreeSet<Word>();
 
         @Override
