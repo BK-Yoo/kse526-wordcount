@@ -62,11 +62,11 @@ public class WordCount {
 
         @Override
         public int compareTo(Word o) {
-            // if text of word is same, return 0(think they are same).
+            // if text of word is same, return 0(consider that they are same).
             if(this.equals(o)) {
                 return 0;
 
-            // texts of both words are different but the frequency is same, return 1 for allowing duplicate word.
+            // texts of both Word instances are different but the frequency is same, return 1 for allowing duplicate word.
             } else if (compareFrequency(o, this) == 0){
                 return 1;
 
@@ -133,15 +133,33 @@ public class WordCount {
     }
 
     public static class Combiner extends Reduce{
+
+        //There is some bugs, that combiner and reducer share the same words instance.
+        //So make words instance private for each worker.
+        private SortedSet<Word> words = new TreeSet<Word>();
+
         @Override
         protected void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
-            super.reduce(key, values, context);
-            // if the sum of key above the frequency of the 100th word,
+            // if the sum frequency of key is above the frequency of the 100th word,
             // write that key-value pair to reduce function.
+            sum = 0;
+            for(IntWritable value : values)
+                sum += value.get();
+
+            addWordToSortedSet(new Word(key.toString(), sum));
+
             if (sum >= words.last().getFrequency()) {
                 tempValue.set(sum);
                 context.write(key, tempValue);
             }
+        }
+
+        private void addWordToSortedSet(Word newWord){
+            words.add(newWord);
+
+            if(words.size() > TOP_100)
+                // last element has the smallest frequency among the words.
+                words.remove(words.last());
         }
     }
 
@@ -151,11 +169,11 @@ public class WordCount {
         protected IntWritable tempValue = new IntWritable();
         protected int sum = 0;
 
-        // Container of word for 100 most frequent words.
-        protected SortedSet<Word> words = new TreeSet<Word>();
-
         // Constant for checking the size of words.
-        private final int TOP_100 = 100;
+        protected final int TOP_100 = 100;
+
+        // Container of word for 100 most frequent words.
+        private SortedSet<Word> words = new TreeSet<Word>();
 
         @Override
         protected void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
@@ -163,14 +181,7 @@ public class WordCount {
             for(IntWritable value : values)
                 sum += value.get();
 
-            if(key.toString().equals("arrive"))
-                System.out.println("arrive "+ sum);
-
-            words.add(new Word(key.toString(), sum));
-
-            if(words.size() > TOP_100)
-                // last element has the smallest frequency among the words.
-                words.remove(words.last());
+            addWordToSortedSet(new Word(key.toString(), sum));
         }
 
         @Override
@@ -184,6 +195,14 @@ public class WordCount {
                 tempValue.set(word.getFrequency());
                 context.write(tempKey, tempValue);
             }
+        }
+
+        private void addWordToSortedSet(Word newWord){
+            words.add(newWord);
+
+            if(words.size() > TOP_100)
+                // last element has the smallest frequency among the words.
+                words.remove(words.last());
         }
 
     }
@@ -219,12 +238,16 @@ public class WordCount {
         }
 
         Job job = new Job(conf);
+        job.setJarByClass(WordCount.class);
 
         job.setJobName("wordcount");
 
         job.setJarByClass(WordCount.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(IntWritable.class);
+
+        //Set 1 for number of reduce task for keeping 100 most words in sorted set.
+        job.setNumReduceTasks(1);
 
         job.setMapperClass(Map.class);
         job.setReducerClass(Reduce.class);
@@ -238,6 +261,6 @@ public class WordCount {
         FileInputFormat.setInputPaths(job, inputPath);
         FileOutputFormat.setOutputPath(job, outputPath);
 
-        System.exit(job.waitForCompletion(true)? 0 : 1);
+        job.waitForCompletion(true);
     }
 }
