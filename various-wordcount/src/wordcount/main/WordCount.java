@@ -175,7 +175,7 @@ public class WordCount {
         // Constant for checking the size of words.
         protected final int TOP_100 = 100;
 
-        // Container of word for 100 most frequent words.
+        // Container for 100 most frequent words.
         private SortedSet<Word> words = new TreeSet<Word>();
 
         @Override
@@ -187,6 +187,9 @@ public class WordCount {
             addWordToSortedSet(new Word(key.toString(), sum));
         }
 
+        /**
+         * this function is triggered when reduce task is done.
+         */
         @Override
         public void cleanup(Context context) throws IOException, InterruptedException {
             emitWords(context);
