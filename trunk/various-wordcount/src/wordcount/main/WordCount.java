@@ -2,7 +2,7 @@ package wordcount.main;
 
 /**
  * Created by bk on 14. 11. 13.
- * Write Code for kse526(Bigdata analysis group assingment)
+ * Write Code for kse526(Bigdata analysis group assignment)
  */
 
 import org.apache.hadoop.conf.Configuration;
@@ -24,6 +24,11 @@ import java.util.TreeSet;
 
 public class WordCount {
 
+    /**
+     * Class represents each word of documents.
+     * This class has the content of word, "text"
+     * and how many the word appear in given documents, "frequency".
+     */
     public static class Word implements Comparable<Word>{
         private final int frequency;
         private final String text;
@@ -50,6 +55,7 @@ public class WordCount {
         public boolean equals(Object obj) {
             if(this == obj)
                 return true;
+
             if(obj instanceof Word)
                 return this.getText().equals(((Word) obj).getText());
 
@@ -58,16 +64,17 @@ public class WordCount {
 
         @Override
         public int compareTo(Word o) {
-            // if text of word is same, return 0(consider that they are same).
+            // if texts of words are same, return 0(consider that both are same).
             if(this.equals(o)) {
                 return 0;
 
-            // texts of both Word instances are different but the frequency is same, return 1 for allowing duplicate word.
+            // texts of both "Word" instances are different but the frequencies are same,
+            // return 1 for allowing duplicate "Word" instances.
             } else if (compareFrequency(o, this) == 0){
                 return 1;
 
             } else {
-                // descending order
+                // put comparing target first for making descending order.
                 return compareFrequency(o, this);
 
             }
@@ -82,10 +89,11 @@ public class WordCount {
         public final static String WORDLENGTH = "wordlength";
         public final static String WORDPREFIX = "wordprefix";
 
+        // Variables for reducing the cost of creating instance.
         private final static IntWritable one = new IntWritable(1);
-
         private Text word = new Text();
 
+        //conditions which users would set.
         private int lengthOfWord = -1;
         private String prefixOfWord = "";
 
@@ -93,7 +101,7 @@ public class WordCount {
         public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException{
 
             // split the string line of input text.
-            // "\\s+" means remove all the white spaces between strings.
+            // "\\s+" means remove all the white spaces between strings include line changes.
             for(String targetWord : value.toString().split("\\s+")) {
                 targetWord = targetWord.trim();
                 if(targetWord.equals(""))
@@ -113,11 +121,11 @@ public class WordCount {
         }
 
         private boolean isMatchedToGivenConditions(String targetWord){
-            return (satisfyLengthCondtion(targetWord) &&
+            return (satisfyLengthCondition(targetWord) &&
                     satisfyPrefixCondition(targetWord));
         }
 
-        private boolean satisfyLengthCondtion(String targetWord){
+        private boolean satisfyLengthCondition(String targetWord){
             return ((lengthOfWord == -1) || (targetWord.length() == lengthOfWord));
         }
 
@@ -128,12 +136,13 @@ public class WordCount {
 
     public static class Combiner extends Reduce{
 
-        //There is some bugs in hadoop, that combiner and reducer share the same words instance.
-        //So make 'words' instance private for each worker.
+        //There is some bugs in hadoop, that combiner and reducer share the same "words" instance.
+        //So make "words" instance private for each worker(one for Combiner, one for Reducer).
         private SortedSet<Word> words = new TreeSet<Word>();
 
         @Override
         protected void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
+
             // if the sum frequency of key is above the frequency of the 100th word,
             // write that key-value pair to reduce function.
             sum = 0;
@@ -204,7 +213,7 @@ public class WordCount {
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration();
 
-        //Enable MapReduce intermediate compression as Snappy
+        //Enable MapReduce intermediate output compression as Snappy
         conf.setBoolean("mapred.compress.map.output", true);
         conf.set("mapred.map.output.compression.codec", "org.apache.hadoop.io.compress.SnappyCodec");
 
@@ -244,7 +253,7 @@ public class WordCount {
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(IntWritable.class);
 
-        //Set 1 for number of reduce task for keeping 100 most words in sorted set.
+        //Set only one reduce task for keeping 100 most words in sorted set.
         job.setNumReduceTasks(1);
 
         job.setMapperClass(Map.class);
