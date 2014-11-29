@@ -215,8 +215,8 @@ public class WordCount {
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration();
 
-        conf.setBoolean("mapred.compress.map.output", true);
-        conf.set("mapred.map.output.compression.codec", "org.apache.hadoop.io.compress.GzipCodec");
+        //conf.setBoolean("mapred.compress.map.output", true);
+        //conf.set("mapred.map.output.compression.codec", "org.apache.hadoop.io.compress.GzipCodec");
 
         //Enable MapReduce intermediate compression as Snappy
         //conf.set("mapred.map.output.compression.codec", "org.apache.hadoop.io.compress.SnappyCodec");
