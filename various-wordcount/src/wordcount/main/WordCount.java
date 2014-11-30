@@ -135,6 +135,8 @@ public class WordCount {
         //So make 'words' instance private for each worker.
         private SortedSet<Word> words = new TreeSet<Word>();
 
+        private final int BUFFER_SIZE = 800;
+
         @Override
         protected void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
             // if the sum frequency of key is above the frequency of the 100th word,
@@ -143,21 +145,19 @@ public class WordCount {
             for(IntWritable value : values)
                 sum += value.get();
 
-            if(words.isEmpty()) {
-                words.add(new Word(key.toString(), sum));
 
-            } else if(sum >= words.last().getFrequency()){
-                addWordToSortedSet(new Word(key.toString(), sum));
+            addWordToSortedSet(new Word(key.toString(), sum));
+
+            if(sum >= words.last().getFrequency()){
                 tempValue.set(sum);
                 context.write(key, tempValue);
-
             }
         }
 
         private void addWordToSortedSet(Word newWord){
             words.add(newWord);
 
-            if(words.size() > TOP_100)
+            if(words.size() > BUFFER_SIZE)
                 // last element has the smallest frequency among the words.
                 words.remove(words.last());
         }
